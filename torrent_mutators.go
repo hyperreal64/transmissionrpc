@@ -29,28 +29,28 @@ func (c *Client) TorrentSet(ctx context.Context, payload TorrentSetPayload) (err
 
 // TorrentSetPayload contains all the mutators appliable on one torrent.
 type TorrentSetPayload struct {
-	BandwidthPriority   *int64         `json:"bandwidthPriority"`   // this torrent's bandwidth tr_priority_t
-	DownloadLimit       *int64         `json:"downloadLimit"`       // maximum download speed (KBps)
-	DownloadLimited     *bool          `json:"downloadLimited"`     // true if "downloadLimit" is honored
-	FilesWanted         []int64        `json:"files-wanted"`        // indices of file(s) to download
-	FilesUnwanted       []int64        `json:"files-unwanted"`      // indices of file(s) to not download
-	Group               *string        `json:"group"`               // bandwidth group to add torrent to
-	HonorsSessionLimits *bool          `json:"honorsSessionLimits"` // true if session upload limits are honored
-	IDs                 []int64        `json:"ids"`                 // torrent list
-	Labels              []string       `json:"labels"`              // RPC v16: strings of user-defined labels
-	Location            *string        `json:"location"`            // new location of the torrent's content
-	PeerLimit           *int64         `json:"peer-limit"`          // maximum number of peers
-	PriorityHigh        []int64        `json:"priority-high"`       // indices of high-priority file(s)
-	PriorityLow         []int64        `json:"priority-low"`        // indices of low-priority file(s)
-	PriorityNormal      []int64        `json:"priority-normal"`     // indices of normal-priority file(s)
-	QueuePosition       *int64         `json:"queuePosition"`       // position of this torrent in its queue [0...n)
-	SeedIdleLimit       *time.Duration `json:"seedIdleLimit"`       // torrent-level number of minutes of seeding inactivity
-	SeedIdleMode        *int64         `json:"seedIdleMode"`        // which seeding inactivity to use
-	SeedRatioLimit      *float64       `json:"seedRatioLimit"`      // torrent-level seeding ratio
-	SeedRatioMode       *SeedRatioMode `json:"seedRatioMode"`       // which ratio mode to use
-	TrackerList         *string        `json:"trackerList"`         // string of announce URLs, one per line, and a blank line between tiers
-	UploadLimit         *int64         `json:"uploadLimit"`         // maximum upload speed (KBps)
-	UploadLimited       *bool          `json:"uploadLimited"`       // true if "uploadLimit" is honored
+	BandwidthPriority   int64         `json:"bandwidthPriority"`   // this torrent's bandwidth tr_priority_t
+	DownloadLimit       int64         `json:"downloadLimit"`       // maximum download speed (KBps)
+	DownloadLimited     bool          `json:"downloadLimited"`     // true if "downloadLimit" is honored
+	FilesWanted         []int64       `json:"files-wanted"`        // indices of file(s) to download
+	FilesUnwanted       []int64       `json:"files-unwanted"`      // indices of file(s) to not download
+	Group               string        `json:"group"`               // bandwidth group to add torrent to
+	HonorsSessionLimits bool          `json:"honorsSessionLimits"` // true if session upload limits are honored
+	IDs                 []int64       `json:"ids"`                 // torrent list
+	Labels              []string      `json:"labels"`              // RPC v16: strings of user-defined labels
+	Location            string        `json:"location"`            // new location of the torrent's content
+	PeerLimit           int64         `json:"peer-limit"`          // maximum number of peers
+	PriorityHigh        []int64       `json:"priority-high"`       // indices of high-priority file(s)
+	PriorityLow         []int64       `json:"priority-low"`        // indices of low-priority file(s)
+	PriorityNormal      []int64       `json:"priority-normal"`     // indices of normal-priority file(s)
+	QueuePosition       int64         `json:"queuePosition"`       // position of this torrent in its queue [0...n)
+	SeedIdleLimit       time.Duration `json:"seedIdleLimit"`       // torrent-level number of minutes of seeding inactivity
+	SeedIdleMode        int64         `json:"seedIdleMode"`        // which seeding inactivity to use
+	SeedRatioLimit      float64       `json:"seedRatioLimit"`      // torrent-level seeding ratio
+	SeedRatioMode       SeedRatioMode `json:"seedRatioMode"`       // which ratio mode to use
+	TrackerList         string        `json:"trackerList"`         // string of announce URLs, one per line, and a blank line between tiers
+	UploadLimit         int64         `json:"uploadLimit"`         // maximum upload speed (KBps)
+	UploadLimited       bool          `json:"uploadLimited"`       // true if "uploadLimit" is honored
 }
 
 // MarshalJSON allows to marshall into JSON only the non nil fields.
@@ -60,15 +60,14 @@ func (tsp TorrentSetPayload) MarshalJSON() (data []byte, err error) {
 	// Build an intermediary payload with base types
 	type baseTorrentSetPayload TorrentSetPayload
 	tmp := struct {
-		SeedIdleLimit *int64 `json:"seedIdleLimit"`
+		SeedIdleLimit int64 `json:"seedIdleLimit"`
 		*baseTorrentSetPayload
 	}{
 		baseTorrentSetPayload: (*baseTorrentSetPayload)(&tsp),
 	}
-	if tsp.SeedIdleLimit != nil {
-		sil := int64(*tsp.SeedIdleLimit / time.Minute)
-		tmp.SeedIdleLimit = &sil
-	}
+
+	tmp.SeedIdleLimit = int64(tsp.SeedIdleLimit / time.Minute)
+
 	// Build a payload with only the non nil fields
 	tspv := reflect.ValueOf(tmp)
 	tspt := tspv.Type()

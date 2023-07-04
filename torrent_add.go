@@ -38,7 +38,7 @@ func (c *Client) TorrentAddFileDownloadDir(ctx context.Context, filepath, downlo
 		return
 	}
 	// Prepare and send payload
-	return c.TorrentAdd(ctx, TorrentAddPayload{MetaInfo: &b64, DownloadDir: &downloaddir})
+	return c.TorrentAdd(ctx, TorrentAddPayload{MetaInfo: b64, DownloadDir: downloaddir})
 }
 
 // TorrentAddFile is wrapper to directly add a torrent file (it handles the base64 encoding
@@ -57,15 +57,15 @@ func (c *Client) TorrentAddFile(ctx context.Context, filepath string) (torrent T
 		return
 	}
 	// Prepare and send payload
-	return c.TorrentAdd(ctx, TorrentAddPayload{MetaInfo: &b64})
+	return c.TorrentAdd(ctx, TorrentAddPayload{MetaInfo: b64})
 }
 
 // TorrentAdd allows to send an Add payload. If successful (torrent added or duplicate) torrent
 // return value will only have HashString, ID and Name fields set up.
 func (c *Client) TorrentAdd(ctx context.Context, payload TorrentAddPayload) (torrent Torrent, err error) {
 	// Validate
-	if payload.Filename == nil && payload.MetaInfo == nil {
-		err = errors.New("fields Filename and MetaInfo can't be both nil")
+	if payload.Filename == "" && payload.MetaInfo == "" {
+		err = errors.New("fields Filename and MetaInfo can't be both empty")
 		return
 	}
 	// Send payload
@@ -74,27 +74,20 @@ func (c *Client) TorrentAdd(ctx context.Context, payload TorrentAddPayload) (tor
 		err = fmt.Errorf("'torrent-add' rpc method failed: %w", err)
 		return
 	}
-	// Extract results
-	if result.TorrentAdded != nil {
-		torrent = *result.TorrentAdded
-	} else if result.TorrentDuplicate != nil {
-		torrent = *result.TorrentDuplicate
-	} else {
-		err = errors.New("RPC call went fine but neither 'torrent-added' nor 'torrent-duplicate' result payload were found")
-	}
+
 	return
 }
 
 // TorrentAddPayload represents the data to send in order to add a torrent.
 type TorrentAddPayload struct {
-	Cookies           *string  `json:"cookies"`           // pointer to a string of one or more cookies
-	DownloadDir       *string  `json:"download-dir"`      // path to download the torrent to
-	Filename          *string  `json:"filename"`          // filename or URL of the .torrent file
+	Cookies           string   `json:"cookies"`           // pointer to a string of one or more cookies
+	DownloadDir       string   `json:"download-dir"`      // path to download the torrent to
+	Filename          string   `json:"filename"`          // filename or URL of the .torrent file
 	Labels            []string `json:"labels"`            // Labels for the torrent
-	MetaInfo          *string  `json:"metainfo"`          // base64-encoded .torrent content
-	Paused            *bool    `json:"paused"`            // if true, don't start the torrent
-	PeerLimit         *int64   `json:"peer-limit"`        // maximum number of peers
-	BandwidthPriority *int64   `json:"bandwidthPriority"` // torrent's bandwidth tr_priority_t
+	MetaInfo          string   `json:"metainfo"`          // base64-encoded .torrent content
+	Paused            bool     `json:"paused"`            // if true, don't start the torrent
+	PeerLimit         int64    `json:"peer-limit"`        // maximum number of peers
+	BandwidthPriority int64    `json:"bandwidthPriority"` // torrent's bandwidth tr_priority_t
 	FilesWanted       []int64  `json:"files-wanted"`      // indices of file(s) to download
 	FilesUnwanted     []int64  `json:"files-unwanted"`    // indices of file(s) to not download
 	PriorityHigh      []int64  `json:"priority-high"`     // indices of high-priority file(s)
@@ -124,8 +117,8 @@ func (tap TorrentAddPayload) MarshalJSON() (data []byte, err error) {
 }
 
 type torrentAddAnswer struct {
-	TorrentAdded     *Torrent `json:"torrent-added"`
-	TorrentDuplicate *Torrent `json:"torrent-duplicate"`
+	TorrentAdded     Torrent `json:"torrent-added"`
+	TorrentDuplicate Torrent `json:"torrent-duplicate"`
 }
 
 // File2Base64 returns the base64 encoding of the file provided by filename.
